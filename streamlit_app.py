@@ -6,7 +6,6 @@ import os  # Import to check if file exists
 
 # Updated URL of the CSV file in GitHub
 url = 'https://raw.githubusercontent.com/ajthebear/family-recipes/9d24313144ee037239270ae6070c0d70c9c001b5/Family_Recipe_Viewer_Cleaned_v8.csv'
-
 @st.cache_data
 def load_data():
     try:
@@ -197,7 +196,6 @@ def show_add_recipe():
             with open(submitted_recipes_file, "a") as f:
                 pd.DataFrame([new_recipe]).to_csv(f, header=False, index=False)
         else:
-            # If the file doesn't exist
             # If the file doesn't exist, create it with a header
             pd.DataFrame([new_recipe]).to_csv(submitted_recipes_file, index=False)
         
