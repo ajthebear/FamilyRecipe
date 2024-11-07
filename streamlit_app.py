@@ -1,6 +1,115 @@
 import streamlit as st
+import pandas as pd
+from urllib.parse import urlparse  # For URL validation
 
-st.title("🎈 My new app")
-st.write(
-    "Let's start building! For help and inspiration, head over to [docs.streamlit.io](https://docs.streamlit.io/)."
-)
+# Updated URL of the CSV file in GitHub
+url = 'https://raw.githubusercontent.com/ajthebear/family-recipes/476e7c2c98ac0330a579908b704db7f0ec9f142d/Family_Recipe_Viewer_Cleaned_v4.csv'
+
+@st.cache_data  # Caches the data for faster loading
+def load_data():
+    try:
+        # Attempt to read the CSV file from GitHub
+        data = pd.read_csv(url)
+        
+        # Ensure the required columns are in the CSV
+        required_columns = [
+            "Recipe Name", "with Title", "Calories", "Prep Time", "Cook Time", 
+            "Recipe Bio", "Bust Out List", "Ingredients", "Instructions", 
+            "Image URL", "Dairy-Free", "Vegetarian"
+        ]
+        
+        # Check for missing columns
+        missing_columns = [col for col in required_columns if col not in data.columns]
+        if missing_columns:
+            st.error(f"Missing columns in CSV: {', '.join(missing_columns)}")
+            return pd.DataFrame()
+        
+        return data
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
+        return pd.DataFrame()
+
+# Helper function to check if a URL is valid
+def is_valid_url(url):
+    try:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False
+
+# Load the recipe data from GitHub CSV
+recipe_data = load_data()
+
+# Verify data is loaded correctly
+if recipe_data.empty:
+    st.stop()  # Stop execution if data failed to load
+
+# Title for the app
+st.title("Family Recipe Viewer")
+
+# Dropdown to select recipe
+recipe_name = st.selectbox("Select a Recipe", recipe_data["Recipe Name"].unique())
+
+# Filter the recipe data for the selected recipe
+recipe = recipe_data[recipe_data["Recipe Name"] == recipe_name].iloc[0]
+
+# Display the main recipe name
+st.markdown(f"<h1 style='text-align: center; font-family: Arial; color: #FF6347;'>{recipe['Recipe Name']}</h1>", unsafe_allow_html=True)
+
+# Display secondary title ("with Title")
+st.markdown(f"<h2 style='text-align: center; font-family: Arial; color: #FFA07A;'>{recipe['with Title']}</h2>", unsafe_allow_html=True)
+
+# Handle missing or invalid image URLs
+image_url = recipe["Image URL"] if pd.notna(recipe["Image URL"]) and is_valid_url(str(recipe["Image URL"])) else "https://via.placeholder.com/150"
+st.image(image_url, use_column_width=True)
+
+# Centered calories information
+st.markdown(f"<h3 style='text-align: center; font-size: 24px; color: #008080;'>{recipe['Calories']} Calories</h3>", unsafe_allow_html=True)
+
+# Two-column layout for prep time and cook time
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown(f"<p style='font-size: 18px; color: #444444;'>**Prep Time:** {recipe['Prep Time']} minutes</p>", unsafe_allow_html=True)
+with col2:
+    st.markdown(f"<p style='font-size: 18px; color: #444444;'>**Cook Time:** {recipe['Cook Time']} minutes</p>", unsafe_allow_html=True)
+
+# Three-column layout for Dairy-Free, Low Calorie, and Vegetarian flags
+st.markdown("<hr>", unsafe_allow_html=True)
+flag_col1, flag_col2, flag_col3 = st.columns(3)
+if recipe["Dairy-Free"]:
+    with flag_col1:
+        st.markdown("<p style='font-size: 16px; color: green;'>Dairy-Free</p>", unsafe_allow_html=True)
+if recipe["Calories"] < 670:
+    with flag_col2:
+        st.markdown("<p style='font-size: 16px; color: blue;'>Low Calorie</p>", unsafe_allow_html=True)
+if recipe["Vegetarian"]:
+    with flag_col3:
+        st.markdown("<p style='font-size: 16px; color: purple;'>Vegetarian</p>", unsafe_allow_html=True)
+st.markdown("<hr>", unsafe_allow_html=True)
+
+# Recipe Bio section
+st.subheader("Recipe Bio")
+st.markdown(f"<p style='font-size: 16px; color: #666666;'>{recipe['Recipe Bio']}</p>", unsafe_allow_html=True)
+
+# Two-column layout for Ingredients and Bust Out List
+col1, col2 = st.columns(2)
+with col1:
+    st.subheader("Ingredients")
+    ingredients = recipe["Ingredients"].split(",")  # Split ingredients by commas
+    for ingredient in ingredients:
+        st.markdown(f"<p style='font-size: 18px;'>- {ingredient.strip()}</p>", unsafe_allow_html=True)
+        
+with col2:
+    st.subheader("Bust Out List")
+    bust_out_list = recipe["Bust Out List"].split(",")  # Split bust-out list items by commas
+    for item in bust_out_list:
+        st.markdown(f"<p style='font-size: 18px;'>- {item.strip()}</p>", unsafe_allow_html=True)
+
+# Line break before instructions
+st.markdown("<hr style='border-top: 3px solid #bbb;'>", unsafe_allow_html=True)
+
+# Left-aligned and enlarged cooking instructions
+st.subheader("Instructions")
+instructions = recipe["Instructions"].split(",")  # Split instructions by commas
+for idx, instruction in enumerate(instructions, start=1):
+    st.markdown(f"<p style='font-size: 20px;'><strong>Step {idx}:</strong> {instruction.strip()}</p>", unsafe_allow_html=True)
