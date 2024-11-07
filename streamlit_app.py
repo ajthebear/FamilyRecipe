@@ -1,23 +1,31 @@
 import streamlit as st
 import pandas as pd
 from urllib.parse import urlparse
+import base64
+import os  # Import to check if file exists
 
-# URL of the CSV file in GitHub
-url = 'https://raw.githubusercontent.com/ajthebear/family-recipes/ed0d8ed220cdd9512c84c5432dfe1d1e39caf831/Family_Recipe_Viewer_Cleaned_v5.csv'
+# Updated URL of the CSV file in GitHub
+url = 'https://raw.githubusercontent.com/ajthebear/family-recipes/9d24313144ee037239270ae6070c0d70c9c001b5/Family_Recipe_Viewer_Cleaned_v8.csv'
 
 @st.cache_data
 def load_data():
     try:
         data = pd.read_csv(url)
+        
+        # List of required columns
         required_columns = [
             "Recipe Name", "with Title", "Calories", "Prep Time", "Cook Time", 
             "Recipe Bio", "Bust Out List", "Ingredients", "Instructions", 
             "Image URL", "Dairy-Free", "Vegetarian"
         ]
+        
+        # Check for missing columns
         missing_columns = [col for col in required_columns if col not in data.columns]
         if missing_columns:
             st.error(f"Missing columns in CSV: {', '.join(missing_columns)}")
+            st.write("Columns found in CSV:", data.columns.tolist())  # Display available columns for debugging
             return pd.DataFrame()
+        
         return data
     except Exception as e:
         st.error(f"Error loading data: {e}")
@@ -30,18 +38,6 @@ def is_valid_url(url):
     except ValueError:
         return False
 
-# Load data
-recipe_data = load_data()
-
-# Initialize session state for favorites and selected recipe
-if "favorites" not in st.session_state:
-    st.session_state.favorites = []
-if "selected_recipe" not in st.session_state:
-    st.session_state.selected_recipe = None
-
-# Page navigation
-page = st.sidebar.selectbox("Select Page", ["View Recipe", "Add Recipe", "Favorites"])
-
 # Function to toggle favorites
 def toggle_favorite(recipe_name):
     if recipe_name in st.session_state.favorites:
@@ -51,7 +47,26 @@ def toggle_favorite(recipe_name):
         st.session_state.favorites.append(recipe_name)
         st.success(f"Added '{recipe_name}' to favorites")
 
-if page == "View Recipe":
+# Load data
+recipe_data = load_data()
+
+# Initialize session state for navigation, favorites, and form submissions
+if "favorites" not in st.session_state:
+    st.session_state.favorites = []
+if "selected_recipe" not in st.session_state:
+    st.session_state.selected_recipe = None
+if "page" not in st.session_state:
+    st.session_state.page = "recipe_viewer"  # Default to the recipe viewer page
+
+# Path to the file where submitted recipes will be stored
+submitted_recipes_file = "submitted_recipes.csv"
+
+# Navigation options
+def set_page(page_name):
+    st.session_state.page = page_name
+
+# Define page content functions
+def show_recipe_viewer():
     st.title("Family Recipe Viewer")
     
     # Select the recipe to display, defaulting to a selected favorite if available
@@ -120,7 +135,7 @@ if page == "View Recipe":
     if st.button("Add to Favorites" if recipe_name not in st.session_state.favorites else "Remove from Favorites"):
         toggle_favorite(recipe_name)
 
-elif page == "Favorites":
+def show_favorites():
     st.title("Favorite Recipes")
     if not st.session_state.favorites:
         st.info("No favorites added yet.")
@@ -128,9 +143,79 @@ elif page == "Favorites":
         for fav_recipe in st.session_state.favorites:
             # Display the favorite recipe name as a clickable link
             if st.button(f"View {fav_recipe}", key=f"view_{fav_recipe}"):
+                # Set selected recipe and switch to recipe viewer
                 st.session_state.selected_recipe = fav_recipe
-                st.experimental_rerun()  # Reload the app to show the View Recipe page with the selected recipe
+                set_page("recipe_viewer")
+                # Force a rerun by toggling a dummy state variable
+                st.session_state["_rerun"] = not st.session_state.get("_rerun", False)
 
-elif page == "Add Recipe":
-    # Add Recipe page code remains the same as in the previous example
-    pass
+def show_add_recipe():
+    st.title("Submit a New Recipe")
+
+    # Recipe form inputs
+    recipe_name = st.text_input("Recipe Name")
+    with_title = st.text_input("Subtitle")
+    calories = st.number_input("Calories", min_value=0)
+    prep_time = st.number_input("Prep Time (minutes)", min_value=0)
+    cook_time = st.number_input("Cook Time (minutes)", min_value=0)
+    recipe_bio = st.text_area("Recipe Bio")
+    ingredients = st.text_area("Ingredients (comma-separated)")
+    bust_out_list = st.text_area("Bust Out List (comma-separated)")
+    instructions = st.text_area("Instructions (comma-separated)")
+    dairy_free = st.checkbox("Dairy-Free")
+    vegetarian = st.checkbox("Vegetarian")
+
+    # Image upload
+    image_file = st.file_uploader("Upload a Recipe Image", type=["jpg", "jpeg", "png"])
+
+    if st.button("Submit Recipe"):
+        # Convert image to a URL (for demonstration)
+        image_url = ""
+        if image_file is not None:
+            # Convert image to base64 and create a data URL
+            image_data = base64.b64encode(image_file.read()).decode("utf-8")
+            image_url = f"data:image/jpeg;base64,{image_data}"
+        
+        new_recipe = {
+            "Recipe Name": recipe_name,
+            "with Title": with_title,
+            "Calories": calories,
+            "Prep Time": prep_time,
+            "Cook Time": cook_time,
+            "Recipe Bio": recipe_bio,
+            "Bust Out List": bust_out_list,
+            "Ingredients": ingredients,
+            "Instructions": instructions,
+            "Image URL": image_url,
+            "Dairy-Free": dairy_free,
+            "Vegetarian": vegetarian
+        }
+        
+        # Append the new recipe to the CSV file
+        if os.path.exists(submitted_recipes_file):
+            # If the file exists, open it in append mode
+            with open(submitted_recipes_file, "a") as f:
+                pd.DataFrame([new_recipe]).to_csv(f, header=False, index=False)
+        else:
+            # If the file doesn't exist
+            # If the file doesn't exist, create it with a header
+            pd.DataFrame([new_recipe]).to_csv(submitted_recipes_file, index=False)
+        
+        st.success(f"Recipe '{recipe_name}' submitted successfully!")
+
+# Sidebar navigation
+st.sidebar.title("Navigation")
+if st.sidebar.button("View Recipes"):
+    set_page("recipe_viewer")
+if st.sidebar.button("Favorites"):
+    set_page("favorites")
+if st.sidebar.button("Add Recipe"):
+    set_page("add_recipe")
+
+# Display the chosen view
+if st.session_state.page == "favorites":
+    show_favorites()
+elif st.session_state.page == "recipe_viewer":
+    show_recipe_viewer()
+elif st.session_state.page == "add_recipe":
+    show_add_recipe()
