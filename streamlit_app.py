@@ -258,7 +258,6 @@ def show_add_recipe():
             with open(submitted_recipes_file, "a") as f:
                 pd.DataFrame([new_recipe]).to_csv(f, header=False, index=False)
         else:
-            # If the file doesn't exist
             # If the file doesn't exist, create it with a header
             pd.DataFrame([new_recipe]).to_csv(submitted_recipes_file, index=False)
         
