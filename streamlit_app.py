@@ -3,6 +3,9 @@ import pandas as pd
 from urllib.parse import urlparse
 import base64
 import os  # Import to check if file exists
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 # Updated URL of the CSV file in GitHub
 url = 'https://raw.githubusercontent.com/ajthebear/family-recipes/8d6b6afd6f50569c9e9dad2113289058dd59861a/Family_Recipe_Viewer_Cleaned_v9.csv'
@@ -210,6 +213,43 @@ def show_favorites():
                 # Force a rerun by toggling a dummy state variable
                 st.session_state["_rerun"] = not st.session_state.get("_rerun", False)
 
+def send_email(recipe_name, recipe_details):
+    sender_email = st.secrets["EMAIL_ADDRESS"]
+    receiver_email = "aj.kuemmel@gmail.com"  # Email where you'd like to receive recipes
+    password = st.secrets["EMAIL_PASSWORD"]
+    smtp_server = st.secrets["SMTP_SERVER"]
+    smtp_port = st.secrets["SMTP_PORT"]
+
+    # Create the email content
+    message = MIMEMultipart("alternative")
+    message["Subject"] = f"New Recipe Submission: {recipe_name}"
+    message["From"] = sender_email
+    message["To"] = receiver_email
+
+    # HTML and plain text parts
+    text = f"A new recipe '{recipe_name}' has been submitted.\n\nDetails:\n{recipe_details}"
+    html = f"""
+    <html>
+        <body>
+            <h2>New Recipe Submission: {recipe_name}</h2>
+            <p>{recipe_details}</p>
+        </body>
+    </html>
+    """
+
+    # Attach both parts to the email
+    message.attach(MIMEText(text, "plain"))
+    message.attach(MIMEText(html, "html"))
+
+    # Connect to SMTP server and send the email
+    try:
+        with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+            server.login(sender_email, password)
+            server.sendmail(sender_email, receiver_email, message.as_string())
+        st.success("Recipe submitted successfully and email sent!")
+    except Exception as e:
+        st.error(f"Error sending email: {e}")
+
 def show_add_recipe():
     st.title("Submit a New Recipe")
 
@@ -237,31 +277,25 @@ def show_add_recipe():
             image_data = base64.b64encode(image_file.read()).decode("utf-8")
             image_url = f"data:image/jpeg;base64,{image_data}"
         
-        new_recipe = {
-            "Recipe Name": recipe_name,
-            "with Title": with_title,
-            "Calories": calories,
-            "Prep Time": prep_time,
-            "Cook Time": cook_time,
-            "Recipe Bio": recipe_bio,
-            "Bust Out List": bust_out_list,
-            "Ingredients": ingredients,
-            "Instructions": instructions,
-            "Image URL": image_url,
-            "Dairy-Free": dairy_free,
-            "Vegetarian": vegetarian,
-        }
-        
-        # Append the new recipe to the CSV file
-        if os.path.exists(submitted_recipes_file):
-            # If the file exists, open it in append mode
-            with open(submitted_recipes_file, "a") as f:
-                pd.DataFrame([new_recipe]).to_csv(f, header=False, index=False)
-        else:
-            # If the file doesn't exist, create it with a header
-            pd.DataFrame([new_recipe]).to_csv(submitted_recipes_file, index=False)
-        
-        st.success(f"Recipe '{recipe_name}' submitted successfully!")
+        # Gather detailed recipe information
+        recipe_details = (
+            f"Title: {recipe_name}\n"
+            f"Subtitle: {with_title}\n"
+            f"Calories: {calories}\n"
+            f"Prep Time: {prep_time} minutes\n"
+            f"Cook Time: {cook_time} minutes\n"
+            f"Recipe Bio: {recipe_bio}\n"
+            f"Ingredients: {ingredients}\n"
+            f"Bust Out List: {bust_out_list}\n"
+            f"Instructions: {instructions}\n"
+            f"Dairy-Free: {'Yes' if dairy_free else 'No'}\n"
+            f"Vegetarian: {'Yes' if vegetarian else 'No'}"
+        )
+
+        # Send the email with the detailed recipe information
+        send_email(recipe_name, recipe_details)
+        st.success(f"Recipe '{recipe_name}' submitted and sent via email!")
+
 
 def show_recipe_list():
     st.title("Recipe List")
