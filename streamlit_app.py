@@ -215,8 +215,8 @@ def show_favorites():
 
 def send_email(recipe_name, recipe_details):
     sender_email = st.secrets["EMAIL_ADDRESS"]
-    receiver_email = "aj.kuemmel@gmail.com"  # Email where you'd like to receive recipes
-    password = st.secrets["EMAIL_PASSWORD"]
+    receiver_email = "aj.kuemmel@gmail.com"  
+    email_password = st.secrets["EMAIL_PASSWORD"]
     smtp_server = st.secrets["SMTP_SERVER"]
     smtp_port = st.secrets["SMTP_PORT"]
 
@@ -244,9 +244,9 @@ def send_email(recipe_name, recipe_details):
     # Connect to SMTP server and send the email
     try:
         with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
-            server.login(sender_email, password)
+            server.login(sender_email, email_password)
             server.sendmail(sender_email, receiver_email, message.as_string())
-        st.success("Recipe submitted successfully and email sent!")
+            st.success("Recipe submitted successfully and email sent!")
     except Exception as e:
         st.error(f"Error sending email: {e}")
 
@@ -296,7 +296,6 @@ def show_add_recipe():
         send_email(recipe_name, recipe_details)
         st.success(f"Recipe '{recipe_name}' submitted and sent via email!")
 
-
 def show_recipe_list():
     st.title("Recipe List")
 
@@ -316,7 +315,6 @@ def show_recipe_list():
         unsafe_allow_html=True
     )
             
-
         with col2:
             # Display a button for each recipe with clickable functionality
             if st.button(f"View {row['Recipe Name']}", key=f"select_{row['Recipe Name']}"):
