@@ -70,11 +70,11 @@ def show_recipe_viewer():
     
     # Select the recipe to display, defaulting to a selected favorite if available
     recipe_name = st.selectbox("Select a Recipe", recipe_data["Recipe Name"].unique(), 
-                               index=recipe_data["Recipe Name"].tolist().index(st.session_state.selected_recipe) 
-                               if st.session_state.selected_recipe else 0)
+    index=recipe_data["Recipe Name"].tolist().index(st.session_state.selected_recipe) 
+     if st.session_state.selected_recipe else 0)
     recipe = recipe_data[recipe_data["Recipe Name"] == recipe_name].iloc[0]
     st.session_state.selected_recipe = recipe_name  # Store the selected recipe in session
-
+    
     st.markdown(f"<h1 style='text-align: center; color: #D9534F; font-size: 36px; font-family: Georgia, serif; font-weight: bold; "
     "background-color: #FAEBD7; padding: 10px; border-radius: 10px; text-shadow: 1px 1px 2px #888888;'>"
     f"{recipe['Recipe Name']}</h1>", unsafe_allow_html=True)
@@ -201,6 +201,7 @@ def show_favorites():
         st.info("No favorites added yet.")
     else:
         for fav_recipe in st.session_state.favorites:
+           
             # Display the favorite recipe name as a clickable link
             if st.button(f"View {fav_recipe}", key=f"view_{fav_recipe}"):
                 # Set selected recipe and switch to recipe viewer
@@ -263,6 +264,38 @@ def show_add_recipe():
         
         st.success(f"Recipe '{recipe_name}' submitted successfully!")
 
+def show_recipe_list():
+    st.title("Recipe List")
+
+    # Loop through each recipe to display an image in one column and a button in the other
+    for index, row in recipe_data.iterrows():
+        col1, col2 = st.columns([1, 3])  # Adjust column widths as desired
+
+        with col1:
+            # Display a small image (fallback to placeholder if URL is missing or invalid)
+            image_url = row["Image URL"] if pd.notna(row["Image URL"]) and is_valid_url(row["Image URL"]) else "https://via.placeholder.com/80"
+            st.markdown(
+        f"""
+        <div style='display: flex; justify-content: center; align-items: center; height: 100%; min-height: 150px;'>
+            <img src='{image_url}' style='width: 99px; border-radius: 5px;'>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+            
+
+        with col2:
+            # Display a button for each recipe with clickable functionality
+            if st.button(f"View {row['Recipe Name']}", key=f"select_{row['Recipe Name']}"):
+                # Set selected recipe and navigate to recipe viewer
+                st.session_state.selected_recipe = row["Recipe Name"]
+                set_page("recipe_viewer")
+                # Trigger a rerun by toggling a dummy state variable
+                st.session_state["_rerun"] = not st.session_state.get("_rerun", False)
+
+            # Display the recipe bio below the button
+            st.markdown(f"<p style='font-size: 14px; color: #555;'>{row['Recipe Bio']}</p>", unsafe_allow_html=True)
+
 # CSS to set the sidebar width and style sidebar buttons
 sidebar_css = f"""
     <style>
@@ -291,8 +324,11 @@ sidebar_css = f"""
 """
 st.markdown(sidebar_css, unsafe_allow_html=True)
 
-# Sidebar navigation buttons
-if st.sidebar.button("View Recipe"):
+# Sidebar navigation
+st.sidebar.title("Navigation")
+if st.sidebar.button("Recipe List"):
+    set_page("recipe_list")
+if st.sidebar.button("View Recipes"):
     set_page("recipe_viewer")
 if st.sidebar.button("Favorites"):
     set_page("favorites")
@@ -304,5 +340,7 @@ if st.session_state.page == "favorites":
     show_favorites()
 elif st.session_state.page == "recipe_viewer":
     show_recipe_viewer()
+elif st.session_state.page == "recipe_list":
+    show_recipe_list()
 elif st.session_state.page == "add_recipe":
     show_add_recipe()
