@@ -58,7 +58,7 @@ if "page" not in st.session_state:
     st.session_state.page = "recipe_viewer"  # Default to the recipe viewer page
 
 # Path to the file where submitted recipes will be stored
-submitted_recipes_file = "submitted_recipes.csv"
+submitted_recipes_file = "user_recipes.csv"
 
 # Navigation options
 def set_page(page_name):
@@ -256,7 +256,7 @@ def show_add_recipe():
         if os.path.exists(submitted_recipes_file):
             # If the file exists, open it in append mode
             with open(submitted_recipes_file, "a") as f:
-                pd.DataFrame([new_recipe]).to_csv(f, header=True, index=True)
+                pd.DataFrame([new_recipe]).to_csv(f, header=False, index=False)
         else:
             # If the file doesn't exist, create it with a header
             pd.DataFrame([new_recipe]).to_csv(submitted_recipes_file, index=False)
