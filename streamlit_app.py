@@ -218,8 +218,8 @@ def send_email(recipe_name, recipe_details):
     receiver_email = "aj.kuemmel@gmail.com"  
     email_password = st.secrets["EMAIL_PASSWORD"]
     smtp_server = st.secrets["SMTP_SERVER"]
-    smtp_port = st.secrets["SMTP_PORT"]
-
+    smtp_port = int(st.secrets["SMTP_PORT"])  # Convert port to integer if needed
+    
     # Create the email content
     message = MIMEMultipart("alternative")
     message["Subject"] = f"New Recipe Submission: {recipe_name}"
