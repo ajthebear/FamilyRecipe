@@ -249,14 +249,14 @@ def show_add_recipe():
             "Instructions": instructions,
             "Image URL": image_url,
             "Dairy-Free": dairy_free,
-            "Vegetarian": vegetarian
+            "Vegetarian": vegetarian,
         }
         
         # Append the new recipe to the CSV file
         if os.path.exists(submitted_recipes_file):
             # If the file exists, open it in append mode
             with open(submitted_recipes_file, "a") as f:
-                pd.DataFrame([new_recipe]).to_csv(f, header=False, index=False)
+                pd.DataFrame([new_recipe]).to_csv(f, header=True, index=True)
         else:
             # If the file doesn't exist, create it with a header
             pd.DataFrame([new_recipe]).to_csv(submitted_recipes_file, index=False)
