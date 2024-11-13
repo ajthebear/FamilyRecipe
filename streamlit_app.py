@@ -22,7 +22,7 @@ def load_data_from_db():
         conn = sqlitecloud.connect(cloud_db_url)
 
         # SQL query to retrieve all data from the 'recipes' table
-        query = "SELECT * FROM recipes LIMIT 40;"  # Adjust the query as needed
+        query = "SELECT * FROM recipes LIMIT 40;"  
         data = pd.read_sql(query, conn) 
     
         return data
@@ -40,7 +40,7 @@ def is_valid_url(url):
         return False
 
 # Load data
-recipe_data = load_data_from_db()  # Use the new function name here
+recipe_data = load_data_from_db() 
 
 # Initialize session state for navigation, favorites, and form submissions
 if "favorites" not in st.session_state:
