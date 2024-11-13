@@ -84,13 +84,6 @@ def show_recipe_viewer():
     # Retrieve the recipe based on selected `recipe_name`
     recipe = recipe_data[recipe_data["recipe_name"] == selected_recipe_name].iloc[0]
     st.session_state.selected_recipe = selected_recipe_name  # Store the selected recipe in session
-
-    # Select the recipe to display, defaulting to a selected favorite if available
-    #recipe_name = st.selectbox("Select a Recipe", recipe_data[recipe_name].unique(), 
-    #index=recipe_data[recipe_name].tolist().index(st.session_state.selected_recipe) 
-     #if st.session_state.selected_recipe else 0)
-    #recipe = recipe_data[recipe_data[recipe_name] == recipe_name].iloc[0]
-    #st.session_state.selected_recipe = recipe_name  # Store the selected recipe in session
     
     st.markdown(f"<h1 style='text-align: center; color: #D9534F; font-size: 36px; font-family: Georgia, serif; font-weight: bold; "
     "background-color: #FAEBD7; padding: 10px; border-radius: 10px; text-shadow: 1px 1px 2px #888888;'>"
