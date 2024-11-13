@@ -20,7 +20,7 @@ def load_data_from_db():
     try:
         # Connect to the SQLite Cloud database
         conn = sqlitecloud.connect(cloud_db_url)
-
+        
         # SQL query to retrieve all data from the 'recipes' table
         query = "SELECT * FROM recipes LIMIT 40;"  # Adjust the query as needed
         data = pd.read_sql(query, conn) 
@@ -55,7 +55,7 @@ if "page" not in st.session_state:
     st.session_state.page = "recipe_viewer"  # Default to the recipe viewer page
 
 # Path to the file where submitted recipes will be stored
-# submitted_recipes_file = "user_recipes.csv"
+submitted_recipes_file = "user_recipes.csv"
 
 # Navigation options
 def set_page(page_name):
