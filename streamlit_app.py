@@ -12,9 +12,6 @@ import requests
 import tempfile
 import sqlitecloud
 
-# Open the connection to SQLite Cloud
-conn = sqlitecloud.connect("ssqlitecloud://cvpsa2dmhz.sqlite.cloud:8860/recipes.db?apikey=rFLj9aiSTgIQBH0Jh7EGw8hXdODcfxbtYAaASi4fbhk")
-
 # SQLite Cloud URL with API key for access
 cloud_db_url = "ssqlitecloud://cvpsa2dmhz.sqlite.cloud:8860/recipes.db?apikey=rFLj9aiSTgIQBH0Jh7EGw8hXdODcfxbtYAaASi4fbhk"
 
