@@ -20,16 +20,12 @@ def load_data_from_db():
     try:
         # Connect to the SQLite Cloud database
         conn = sqlitecloud.connect(cloud_db_url)
-        
+
         # SQL query to retrieve all data from the 'recipes' table
         query = "SELECT * FROM recipes LIMIT 40;"  # Adjust the query as needed
         data = pd.read_sql(query, conn) 
     
         return data
-
-    except Exception as e:
-        st.error(f"Error loading data from the database: {e}")
-        return pd.DataFrame()  # Return an empty DataFrame on failure
 
     finally:
         # Ensure the database connection is closed
