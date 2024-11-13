@@ -7,7 +7,7 @@ from io import BytesIO
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import sqlite3
+#import sqlite3
 import requests
 import tempfile
 import sqlitecloud
